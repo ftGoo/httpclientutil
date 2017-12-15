@@ -34,7 +34,7 @@ public class HttpUtil {
     }
 
 
-    public byte[] get(String url){
+    public byte[] get(String url) {
         return get(url,null);
     }
 
@@ -121,4 +121,96 @@ public class HttpUtil {
         return responseContent;
     }
 
+    public String getForString(String url) {
+        return getForString(url, null, null);
+    }
+
+    public String getForString(String url, String charset) {
+        return getForString(url, null, charset);
+    }
+
+
+    public String getForString(String url, Header[] headers, String charset) {
+        String responseContent = null;
+        HttpGet get = new HttpGet(url);
+        if (headers != null) {
+            get.setHeaders(headers);
+        }
+        CloseableHttpResponse response = null;
+        try {
+            response = httpClient.execute(get);
+            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                HttpEntity content = response.getEntity();
+                if(charset == null) {
+                    responseContent = EntityUtils.toString(content);
+                }else {
+                    responseContent = EntityUtils.toString(content, charset);
+                }
+                //释放实体
+                EntityUtils.consume(content);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            //关闭响应，只有关闭响应才断开连接这步很重要
+            try {
+                response.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return responseContent;
+    }
+
+    public String postForString(String url) {
+        return postForString(url, null);
+    }
+
+    public String postForString(String url, String resultCharset) {
+        return postForString(url, null, null, resultCharset);
+    }
+
+    public String postForString(String url, List<NameValuePair> postParams, String paramsCharset, String resultCharset) {
+        return postForString(url, postParams, null, paramsCharset, resultCharset);
+    }
+
+    public String postForString(String url, List<NameValuePair> postParams, Header[]headers,
+                                                        String paramsCharset, String resultCharset) {
+        String responseContent = null;
+        String finalParamsCharset = null;
+        String finalResultCharset = null;
+        finalParamsCharset = paramsCharset != null ? paramsCharset : CharsetConstants.UTF8;
+        finalResultCharset = resultCharset != null ? resultCharset : CharsetConstants.UTF8;
+        //System.out.println(charset);
+        try {
+            HttpEntity entity = null;
+            if (postParams != null) {
+                entity = new UrlEncodedFormEntity(postParams, finalParamsCharset);
+            }
+            HttpPost post = new HttpPost(url);
+            if (headers != null) {
+                post.setHeaders(headers);
+            }
+            if (entity != null) post.setEntity(entity);
+            CloseableHttpResponse response = null;
+            try {
+                response = httpClient.execute(post);
+                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                    //Header[] headerws = response.getAllHeaders();
+                    HttpEntity content = response.getEntity();
+                    //System.out.println(EntityUtils.toString(context, "gbk"));
+                    responseContent = EntityUtils.toString(content, finalResultCharset);
+                    //释放实体
+                    EntityUtils.consume(content);
+                }
+                //关闭连接
+                response.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return responseContent;
+    }
 }
