@@ -148,6 +148,8 @@ public class HttpUtil {
                 }
                 //释放实体
                 EntityUtils.consume(content);
+            } else{
+                return response.toString();
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -213,4 +215,7 @@ public class HttpUtil {
         }
         return responseContent;
     }
+
+    //TODO 文件下载和上传
+
 }
